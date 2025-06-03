@@ -15,6 +15,7 @@ jobs:
 
       - name: Set up SSH key
         run: |
+          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.ssh"
           $key = "${{ secrets.DEPLOY_KEY_BASE64 }}"
           $key | Out-File -Encoding ascii "$env:USERPROFILE\.ssh\id_ed25519"
           icacls "$env:USERPROFILE\.ssh\id_ed25519" /inheritance:r /grant:r "$($env:USERNAME):(R)"
