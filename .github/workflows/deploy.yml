@@ -13,26 +13,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup SSH folder
+      - name: Set up SSH key
         run: |
-          New-Item -ItemType Directory -Path $env:USERPROFILE\.ssh -Force
+          $key = "${{ secrets.DEPLOY_KEY_BASE64 }}"
+          $key | Out-File -Encoding ascii "$env:USERPROFILE\.ssh\id_ed25519"
+          icacls "$env:USERPROFILE\.ssh\id_ed25519" /inheritance:r /grant:r "$($env:USERNAME):(R)"
+        shell: pwsh
 
-      - name: Add private key
-        run: |
-          $key = "${{ secrets.DEPLOY_KEY }}" -replace "`r`n", "`n"
-          $keyBytes = [System.Text.Encoding]::UTF8.GetBytes($key)
-          [System.IO.File]::WriteAllBytes("$env:USERPROFILE\.ssh\id_ed25519", $keyBytes)
-          icacls "$env:USERPROFILE\.ssh\id_ed25519" /inheritance:r
-          icacls "$env:USERPROFILE\.ssh\id_ed25519" /grant:r "$($env:USERNAME):(R)"
-
-      - name: Zip project files
-        run: |
-          Compress-Archive -Path * -DestinationPath laravel.zip -Force
+      - name: Zip Laravel Project
+        run: Compress-Archive -Path * -DestinationPath laravel.zip
+        shell: pwsh
 
       - name: Copy zip to Windows server
         run: |
-          scp.exe -i $env:USERPROFILE\.ssh\id_ed25519 -P 2222 laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~
+          scp -i "$env:USERPROFILE\.ssh\id_ed25519" -P 2222 -o StrictHostKeyChecking=no laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~/
+        shell: pwsh
 
-      - name: Unzip on Windows server
+      - name: Unzip on remote server
         run: |
-          ssh.exe -i $env:USERPROFILE\.ssh\id_ed25519 -p 2222 ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path '~/laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
+          ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -P 2222 -o StrictHostKeyChecking=no ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path '$HOME\laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
+        shell: pwsh
