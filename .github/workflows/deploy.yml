@@ -13,6 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Debug DEPLOY_KEY_BASE64 secret info
+        run: |
+          echo "Secret length:"
+          echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | wc -c
+          echo "Secret start (first 20 chars):"
+          echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | head -c 20
+
       - name: Debug DEPLOY_KEY_BASE64 length
         run: |
           echo "Secret length:"
