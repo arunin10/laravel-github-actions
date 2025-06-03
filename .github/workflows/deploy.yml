@@ -12,6 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Debug DEPLOY_KEY_BASE64 length
+        run: |
+          echo "Secret length:"
+          echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | wc -c
+
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
