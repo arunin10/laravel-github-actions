@@ -25,14 +25,6 @@ jobs:
           icacls "$env:USERPROFILE\.ssh\id_ed25519" /inheritance:r
           icacls "$env:USERPROFILE\.ssh\id_ed25519" /grant:r "$($env:USERNAME):(R)"
 
-      - name: Add known hosts
-        run: |
-          try {
-            ssh-keyscan -p 2222 ${{ secrets.WINDOWS_HOST }} >> "$env:USERPROFILE\.ssh\known_hosts"
-          } catch {
-            Write-Host "ssh-keyscan failed. Proceeding anyway."
-          }
-
       - name: Zip project files
         run: |
           Compress-Archive -Path * -DestinationPath laravel.zip -Force
