@@ -38,4 +38,4 @@ jobs:
 
       - name: Unzip on remote server
         run: |
-          ssh -i "$env:USERPROFILE\.ssh\id_ed25519" ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path '$env:USERPROFILE\laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
+          ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -o StrictHostKeyChecking=no ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path '$env:USERPROFILE\laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
