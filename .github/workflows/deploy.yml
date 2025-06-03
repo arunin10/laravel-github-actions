@@ -1,0 +1,30 @@
+name: Deploy to Windows Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.WINDOWS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Zip project files
+        run: zip -r laravel.zip . -x '*.git*' 'vendor/*' 'node_modules/*'
+
+      - name: Copy zip to Windows server
+        run: scp laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~/
+
+      - name: Unzip on Windows server
+        run: ssh ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command `
+          Expand-Archive -Path '$HOME/laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
