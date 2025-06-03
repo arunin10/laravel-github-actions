@@ -1,9 +1,9 @@
-name: Deploy to Windows Server
+name: Deploy Laravel to Windows Server
 
 on:
   push:
     branches:
-      - master  # Change this if your default branch is different
+      - master
 
 jobs:
   deploy:
@@ -13,25 +13,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create .ssh directory
+      - name: Setup SSH folder
         run: |
-          New-Item -ItemType Directory -Force -Path $env:USERPROFILE\.ssh
+          New-Item -ItemType Directory -Path $env:USERPROFILE\.ssh -Force
 
-      - name: Decode and write SSH private key
+      - name: Add private key
         run: |
-          $privateKey = "${{ secrets.DEPLOY_KEY_BASE64 }}"
-          $bytes = [System.Convert]::FromBase64String($privateKey)
-          [System.IO.File]::WriteAllBytes("$env:USERPROFILE\.ssh\id_ed25519", $bytes)
-          icacls "$env:USERPROFILE\.ssh\id_ed25519" /inheritance:r /grant:r "$($env:USERNAME):R"
+          $key = "${{ secrets.DEPLOY_KEY }}" -replace "`r`n", "`n"
+          $keyBytes = [System.Text.Encoding]::UTF8.GetBytes($key)
+          [System.IO.File]::WriteAllBytes("$env:USERPROFILE\.ssh\id_ed25519", $keyBytes)
+          icacls "$env:USERPROFILE\.ssh\id_ed25519" /inheritance:r
+          icacls "$env:USERPROFILE\.ssh\id_ed25519" /grant:r "$($env:USERNAME):(R)"
 
-      - name: Zip project
+      - name: Add known hosts
+        run: |
+          ssh-keyscan -p 2222 ${{ secrets.WINDOWS_HOST }} >> $env:USERPROFILE\.ssh\known_hosts
+
+      - name: Zip project files
         run: |
           Compress-Archive -Path * -DestinationPath laravel.zip -Force
 
-      - name: Copy zip to remote server via SCP
+      - name: Copy zip to Windows server
         run: |
-          scp -i "$env:USERPROFILE\.ssh\id_ed25519" -o StrictHostKeyChecking=no laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~
+          scp.exe -i $env:USERPROFILE\.ssh\id_ed25519 -P 2222 laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~
 
-      - name: Unzip on remote server
+      - name: Unzip on Windows server
         run: |
-          ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -o StrictHostKeyChecking=no ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path `"$env:USERPROFILE\laravel.zip`" -DestinationPath `\"${{ secrets.REMOTE_PATH }}\"` -Force"
+          ssh.exe -i $env:USERPROFILE\.ssh\id_ed25519 -p 2222 ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path '~/laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
