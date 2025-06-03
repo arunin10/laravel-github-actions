@@ -3,11 +3,12 @@ name: Deploy to Windows Server
 on:
   push:
     branches:
-      - master
+      - master   # change to 'main' if your default branch is 'main'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,7 +18,7 @@ jobs:
           echo "Secret length:"
           echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | wc -c
 
-      - name: Set up SSH
+      - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | tr -d '\r\n' | base64 --decode > ~/.ssh/id_ed25519
@@ -25,11 +26,13 @@ jobs:
           ssh-keyscan -H ${{ secrets.WINDOWS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Zip project files
-        run: zip -r laravel.zip . -x '*.git*' 'vendor/*' 'node_modules/*'
+        run: |
+          zip -r laravel.zip . -x '*.git*' 'vendor/*' 'node_modules/*'
 
       - name: Copy zip to Windows server
-        run: scp laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~/
+        run: |
+          scp -i ~/.ssh/id_ed25519 laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~
 
       - name: Unzip on Windows server
-        run: ssh ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command `
-          Expand-Archive -Path '$HOME/laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path \"$env:USERPROFILE/laravel.zip\" -DestinationPath \"${{ secrets.REMOTE_PATH }}\" -Force"
