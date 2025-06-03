@@ -3,7 +3,7 @@ name: Deploy to Windows Server
 on:
   push:
     branches:
-      - master  # Change this if your default branch is different
+      - master  # Change this if your default branch is differentt
 
 jobs:
   deploy:
