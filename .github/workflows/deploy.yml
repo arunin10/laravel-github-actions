@@ -25,3 +25,17 @@ jobs:
           $decodedKey | Out-File -FilePath "$sshDir\id_ed25519" -Encoding ascii -Force
           icacls "$sshDir\id_ed25519" /inheritance:r /grant:r "$($env:USERNAME):(R)"
         shell: pwsh
+
+      - name: Zip Laravel Project
+        run: Compress-Archive -Path * -DestinationPath laravel.zip
+        shell: pwsh
+
+      - name: Copy zip to Windows server
+        run: |
+          scp -i "$env:USERPROFILE\.ssh\id_ed25519" -P 2222 -o StrictHostKeyChecking=no laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~/
+        shell: pwsh
+
+      - name: Unzip on remote server
+        run: |
+          ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -P 2222 -o StrictHostKeyChecking=no ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path '$HOME\laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
+        shell: pwsh
