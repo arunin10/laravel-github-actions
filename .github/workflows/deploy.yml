@@ -1,47 +1,27 @@
-name: Deploy to Windows Server
+name: Deploy to IIS on Windows
 
 on:
   push:
     branches:
-      - master   # change to 'main' if your default branch is 'main'
+      - master  # or your deployment branch
 
 jobs:
   deploy:
-    runs-on: self-hosted
-
+    runs-on: [self-hosted, windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Debug DEPLOY_KEY_BASE64 secret info
-        run: |
-          echo "Secret length:"
-          echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | wc -c
-          echo "Secret start (first 20 chars):"
-          echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | head -c 20
-          
-      - name: Debug DEPLOY_KEY_BASE64 length
-        run: |
-          echo "Secret length:"
-          echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | wc -c
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
 
-      - name: Set up SSH key
+      - name: Install Composer Dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Copy Files to IIS Folder
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_KEY_BASE64 }}" | tr -d '\r\n' | base64 --decode > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.WINDOWS_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Zip project files
-        run: |
-          zip -r laravel.zip . -x '*.git*' 'vendor/*' 'node_modules/*'
-
-      - name: Copy zip to Windows server
-        run: |
-          scp -i ~/.ssh/id_ed25519 laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~
-
-      - name: Unzip on Windows server
-        run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command Expand-Archive -Path \"$env:USERPROFILE/laravel.zip\" -DestinationPath \"${{ secrets.REMOTE_PATH }}\" -Force"
-
-
+          $source = "${{ github.workspace }}"
+          $destination = "D:\Web1\arul\testing"  # <- Change to your IIS folder
+          robocopy $source $destination /MIR /XD .git node_modules tests /XF .env
