@@ -1,4 +1,4 @@
-name: Deploy Laravel to IIS on Windowss
+name: Deploy Laravel to IIS on Windows
 
 on:
   push:
@@ -13,6 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Show current user running the runner
+        shell: powershell
+        run: whoami
+
+      - name: Check folder permissions on deployment folder
+        shell: powershell
+        run: icacls "D:\Web\arul\testing"
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -26,17 +34,9 @@ jobs:
         run: |
           $source = "${{ github.workspace }}"
           $destination = "D:\Web\arul\testing"
-          $result = robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
-          $code = $LASTEXITCODE
-          if ($code -le 3) {
-            Write-Host "Robocopy completed successfully with exit code $code"
-            exit 0
-          } else {
-            Write-Error "Robocopy failed with exit code $code"
-            exit $code
-          }
+          robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
 
-      - name: Set permissions for Laravel
+      - name: Set permissions for Laravel storage and cache folders
         shell: powershell
         run: |
           $laravelPath = "D:\Web\arul\testing"
