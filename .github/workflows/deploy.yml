@@ -3,7 +3,7 @@ name: Deploy Laravel to IIS on Windows
 on:
   push:
     branches:
-      - master  # Change to your deployment branch
+      - master  # Change to your deployment branchh
 
 jobs:
   deploy:
