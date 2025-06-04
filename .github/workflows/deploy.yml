@@ -36,13 +36,19 @@ jobs:
             exit $code
           }
 
+      - name: Debug runner user
+        shell: powershell
+        run: |
+          whoami
+    
       - name: Set folder permissions
         shell: powershell
         run: |
           $folder = "D:\Web\arul\testing"
-          $user = "pmg-ebizwebserv\arul.kumar"
+          $user = "pmg-ebizwebserv\arul.kumar"  # Replace with actual whoami output
           $rule = "`"$user`":(OI)(CI)F"
           icacls $folder /grant $rule /T
+          
       - name: Laravel setup - key generate (if needed)
         shell: powershell
         run: |
