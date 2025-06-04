@@ -60,7 +60,7 @@ jobs:
         shell: powershell
         run: |
           cd D:\Web\arul\testing
-          php D:\Web\arul\testing\artisan config:clear
-          php D:\Web\arul\testing\artisan config:cache
-          php D:\Web\arul\testing\artisan route:cache
-          php D:\Web\arul\testing\artisan view:cache
+          php artisan config:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
