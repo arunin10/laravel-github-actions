@@ -16,29 +16,29 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '7.4'
 
       - name: Install Composer dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --ignore-platform-req=ext-fileinfo
 
       - name: Copy files to IIS folder
         shell: powershell
         run: |
           $source = "${{ github.workspace }}"
-          $destination = "D:\Web1\arul\testing"
+          $destination = "D:\Web\arul\testing"
           robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
 
       - name: Set permissions for Laravel
         shell: powershell
         run: |
-          $laravelPath = "D:\Web1\arul\testing"
+          $laravelPath = "D:\Web\arul\testing"
           icacls "$laravelPath\storage" /grant "IIS_IUSRS:(OI)(CI)F" /T
           icacls "$laravelPath\bootstrap\cache" /grant "IIS_IUSRS:(OI)(CI)F" /T
 
       - name: Laravel key generate (optional, first-time only)
         shell: powershell
         run: |
-          cd D:\Web1\arul\testing
+          cd D:\Web\arul\testing
           if (!(Test-Path ".env")) {
             Copy-Item ".env.example" ".env"
             php artisan key:generate
@@ -47,13 +47,13 @@ jobs:
       - name: Run Laravel migrations (optional)
         shell: powershell
         run: |
-          cd D:\Web1\arul\testing
+          cd D:\Web\arul\testing
           php artisan migrate --force
 
       - name: Laravel config/cache optimization
         shell: powershell
         run: |
-          cd D:\Web1\arul\testing
+          cd D:\Web\arul\testing
           php artisan config:clear
           php artisan config:cache
           php artisan route:cache
