@@ -42,10 +42,21 @@ jobs:
           $folder = "D:\Web\arul\testing"
           icacls $folder /grant "NT AUTHORITY\NETWORK SERVICE:(OI)(CI)F" /T /C
           
-      - name: Debug runner user
+      - name: Debug whoami and check permissions
         shell: powershell
         run: |
           whoami
+          icacls "D:\Web\arul\testing"
+          icacls "D:\Web\arul\testing\storage"
+          icacls "D:\Web\arul\testing\bootstrap\cache"
+
+      - name: Fix permissions on Laravel writable folders
+        shell: powershell
+        run: |
+          $folder = "D:\Web\arul\testing"
+          icacls "$folder" /grant "NT AUTHORITY\NETWORK SERVICE:(OI)(CI)F" /T /C
+          icacls "$folder\storage" /grant "NT AUTHORITY\NETWORK SERVICE:(OI)(CI)F" /T /C
+          icacls "$folder\bootstrap\cache" /grant "NT AUTHORITY\NETWORK SERVICE:(OI)(CI)F" /T /C
     
       - name: Set folder permissions
         shell: powershell
