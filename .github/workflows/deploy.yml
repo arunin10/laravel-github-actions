@@ -26,13 +26,14 @@ jobs:
         run: |
           $source = "${{ github.workspace }}"
           $destination = "D:\Web\arul\testing"
-          robocopy $source $destination /E /XO /XD .git node_modules vendor tests .github /XF .env
-          $rc = $LASTEXITCODE
-          if ($rc -ge 8) {
-            Write-Error "Robocopy failed with exit code $rc"
-            exit $rc
+          robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
+          $code = $LASTEXITCODE
+          if ($code -le 3) {
+            Write-Host "Robocopy completed successfully with exit code $code"
+            exit 0
           } else {
-            Write-Output "Robocopy succeeded with exit code $rc"
+            Write-Error "Robocopy failed with exit code $code"
+            exit $code
           }
 
       - name: Set folder permissions
