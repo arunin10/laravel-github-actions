@@ -51,15 +51,6 @@ jobs:
           icacls "$laravelPath\storage" /grant "IIS_IUSRS:(OI)(CI)F" /T
           icacls "$laravelPath\bootstrap\cache" /grant "IIS_IUSRS:(OI)(CI)F" /T
 
-      - name: Laravel key generate (optional, first-time only)
-        shell: powershell
-        run: |
-          cd D:\Web\arul\testing
-          if (!(Test-Path ".env")) {
-            Copy-Item ".env.example" ".env"
-            php artisan key:generate
-          }
-
       - name: Run Laravel migrations (optional)
         shell: powershell
         run: |
