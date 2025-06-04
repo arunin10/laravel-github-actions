@@ -40,7 +40,7 @@ jobs:
         shell: powershell
         run: |
           $folder = "D:\Web\arul\testing"
-          $user = "$($env:USERDOMAIN)\$($env:USERNAME)"
+          $user = "pmg-ebizwebserv\arul.kumar"
           $rule = "`"$user`":(OI)(CI)F"
           icacls $folder /grant $rule /T
       - name: Laravel setup - key generate (if needed)
