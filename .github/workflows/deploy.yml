@@ -56,6 +56,13 @@ jobs:
           icacls "$laravelPath\storage" /grant "IIS_IUSRS:(OI)(CI)F" /T
           icacls "$laravelPath\bootstrap\cache" /grant "IIS_IUSRS:(OI)(CI)F" /T
 
+      - name: Grant folder permissions to current user
+        shell: powershell
+        run: |
+          $folder = "D:\Web\arul\testing"
+          $user = "$env:USERDOMAIN\$env:USERNAME"
+          icacls $folder /grant "$user:(OI)(CI)F" /T
+
       - name: Laravel config/cache optimization
         shell: powershell
         run: |
