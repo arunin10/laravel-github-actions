@@ -48,6 +48,14 @@ jobs:
           $user = "pmg-ebizwebserv\arul.kumar"  # Replace with actual whoami output
           $rule = "`"$user`":(OI)(CI)F"
           icacls $folder /grant $rule /T
+
+      - name: Set folder permissions
+        shell: powershell
+        run: |
+          $folder = "D:\Web\arul\testing"
+          $user = "nt authority\network service"  # Replace with actual whoami output
+          $rule = "`"$user`":(OI)(CI)F"
+          icacls $folder /grant $rule /T
           
       - name: Laravel setup - key generate (if needed)
         shell: powershell
