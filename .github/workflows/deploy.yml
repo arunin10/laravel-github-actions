@@ -1,4 +1,4 @@
-name: Deploy Laravel to IIS on Windowss
+name: Deploy Laravel to IIS on Windows
 
 on:
   push:
@@ -13,60 +13,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Show current user running the runner
-        shell: powershell
-        run: whoami
-      
-      - name: Test folder access
-        shell: powershell
-        run: |
-          Get-ChildItem -Path D:\Web\arul\testing
-
-      - name: Check folder permissions on deployment folder
-        shell: powershell
-        run: icacls "D:\Web\arul\testing"
-
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: '8.2'
 
       - name: Install Composer dependencies
-        run: composer install --ignore-platform-req=ext-fileinfo
+        run: composer install --ignore-platform-req=ext-fileinfo --no-dev --optimize-autoloader
 
-      - name: Copy files to IIS folder
+      - name: Copy updated files to IIS folder (no vendor, .env, etc.)
         shell: powershell
         run: |
           $source = "${{ github.workspace }}"
           $destination = "D:\Web\arul\testing"
-          robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
-          $code = $LASTEXITCODE
-          if ($code -le 3) {
-            Write-Host "Robocopy completed successfully with exit code $code"
-            exit 0
-          } else {
-            Write-Error "Robocopy failed with exit code $code"
-            exit $code
-          }
+          robocopy $source $destination /E /XO /XD .git node_modules vendor tests .github /XF .env
 
-      - name: Set permissions for Laravel storage and cache folders
-        shell: powershell
-        run: |
-          $laravelPath = "D:\Web\arul\testing"
-          icacls "$laravelPath\storage" /grant "IIS_IUSRS:(OI)(CI)F" /T
-          icacls "$laravelPath\bootstrap\cache" /grant "IIS_IUSRS:(OI)(CI)F" /T
-
-      - name: Grant folder permissions to current user
+      - name: Set folder permissions
         shell: powershell
         run: |
           $folder = "D:\Web\arul\testing"
-          $user = "pmg-ebizwebserv\arul.kumar"
-          icacls $folder /grant "${user}:(OI)(CI)F" /T
+          $user = "$($env:USERDOMAIN)\$($env:USERNAME)"
+          icacls $folder /grant "$user:(OI)(CI)F" /T
+
+      - name: Laravel setup - key generate (if needed)
+        shell: powershell
+        run: |
+          cd "D:\Web\arul\testing"
+          if (!(Test-Path ".env")) {
+            Copy-Item ".env.example" ".env"
+            php artisan key:generate
+          }
+
+      - name: Run Laravel migrations (optional)
+        shell: powershell
+        run: |
+          cd "D:\Web\arul\testing"
+          php artisan migrate --force
 
       - name: Laravel config/cache optimization
         shell: powershell
         run: |
-          cd D:\Web\arul\testing
+          cd "D:\Web\arul\testing"
           php artisan config:clear
           php artisan config:cache
           php artisan route:cache
