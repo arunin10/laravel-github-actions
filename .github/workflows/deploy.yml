@@ -1,29 +1,55 @@
-name: Deploy to IIS on Windows
+name: Deploy Laravel to IIS on Windows
 
 on:
   push:
     branches:
-      - master  # or your deployment branchh
+      - master  # Change to your deployment branch
 
 jobs:
   deploy:
     runs-on: [self-hosted, windows]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up PHP
-        shell: powershell
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
 
-      - name: Install Composer Dependencies
+      - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      - name: Copy Files to IIS Folder
+      - name: Copy files to IIS folder
         shell: powershell
         run: |
           $source = "${{ github.workspace }}"
-          $destination = "D:\Web1\arul\testing"  # <- Change to your IIS folder
-          robocopy $source $destination /MIR /XD .git node_modules tests /XF .env
+          $destination = "D:\Web1\arul\testing"
+          
+          robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
+
+      - name: Set permissions for Laravel
+        shell: powershell
+        run: |
+          $laravelPath = "D:\Web1\arul\testing"
+          icacls "$laravelPath\storage" /grant "IIS_IUSRS:(OI)(CI)F" /T
+          icacls "$laravelPath\bootstrap\cache" /grant "IIS_IUSRS:(OI)(CI)F" /T
+
+      - name: Laravel config/cache optimization
+        shell: powershell
+        run: |
+          cd D:\Web1\arul\testing
+          php artisan config:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+      - name: Laravel key generate (optional, first-time only)
+        shell: powershell
+        run: |
+          cd D:\Web1\arul\testing
+          if (!(Test-Path ".env")) {
+            Copy-Item ".env.example" ".env"
+            php artisan key:generate
+          }
