@@ -36,6 +36,12 @@ jobs:
             exit $code
           }
 
+      - name: Set folder permissions for NETWORK SERVICE
+        shell: powershell
+        run: |
+          $folder = "D:\Web\arul\testing"
+          icacls $folder /grant "NT AUTHORITY\NETWORK SERVICE:(OI)(CI)F" /T /C
+          
       - name: Debug runner user
         shell: powershell
         run: |
