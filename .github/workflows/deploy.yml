@@ -75,11 +75,13 @@ jobs:
       - name: Laravel setup - key generate (if needed)
         shell: powershell
         run: |
-          cd "D:\Web\arul\testing"
+          $path = "D:\Web\arul\testing"
+          Push-Location $path
           if (!(Test-Path ".env")) {
             Copy-Item ".env.example" ".env"
             php artisan key:generate
           }
+          Pop-Location
 
       - name: Run Laravel migrations (optional)
         shell: powershell
