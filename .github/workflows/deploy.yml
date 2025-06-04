@@ -82,7 +82,7 @@ jobs:
             php artisan key:generate
           }
           Pop-Location
-
+          
       - name: Run Laravel migrations (optional)
         shell: powershell
         run: |
