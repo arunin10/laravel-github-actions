@@ -53,9 +53,7 @@ jobs:
         shell: powershell
         run: |
           $folder = "D:\Web\arul\testing"
-          $user = "nt authority\network service"  # Replace with actual whoami output
-          $rule = "`"$user`":(OI)(CI)F"
-          icacls $folder /grant $rule /T
+          icacls $folder /grant "*S-1-1-0:(OI)(CI)F" /T
           
       - name: Laravel setup - key generate (if needed)
         shell: powershell
