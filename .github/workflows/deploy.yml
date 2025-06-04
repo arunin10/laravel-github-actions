@@ -60,7 +60,7 @@ jobs:
         shell: powershell
         run: |
           $folder = "D:\Web\arul\testing"
-          $user = "$env:USERDOMAIN\$env:USERNAME"
+          $user = "pmg-ebizwebserv\arul.kumar"
           icacls $folder /grant "${user}:(OI)(CI)F" /T
 
       - name: Laravel config/cache optimization
