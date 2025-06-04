@@ -16,6 +16,11 @@ jobs:
       - name: Show current user running the runner
         shell: powershell
         run: whoami
+      
+      - name: Test folder access
+        shell: powershell
+        run: |
+          Get-ChildItem -Path D:\Web\arul\testing
 
       - name: Check folder permissions on deployment folder
         shell: powershell
