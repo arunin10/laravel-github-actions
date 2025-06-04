@@ -1,4 +1,4 @@
-name: Deploy to Windows Server
+name: Deploy Laravel to IIS on Windows
 
 on:
   push:
@@ -7,24 +7,54 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, windows]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up SSH
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Copy files to IIS folder
+        shell: powershell
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.WINDOWS_HOST }} >> ~/.ssh/known_hosts
+          $source = "${{ github.workspace }}"
+          $destination = "D:\Web1\arul\testing"
+          robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
 
-      - name: Zip project files
-        run: zip -r laravel.zip . -x '*.git*' 'vendor/*' 'node_modules/*'
+      - name: Set permissions for Laravel
+        shell: powershell
+        run: |
+          $laravelPath = "D:\Web1\arul\testing"
+          icacls "$laravelPath\storage" /grant "IIS_IUSRS:(OI)(CI)F" /T
+          icacls "$laravelPath\bootstrap\cache" /grant "IIS_IUSRS:(OI)(CI)F" /T
 
-      - name: Copy zip to Windows server
-        run: scp laravel.zip ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }}:~/
+      - name: Laravel key generate (optional, first-time only)
+        shell: powershell
+        run: |
+          cd D:\Web1\arul\testing
+          if (!(Test-Path ".env")) {
+            Copy-Item ".env.example" ".env"
+            php artisan key:generate
+          }
 
-      - name: Unzip on Windows server
-        run: ssh ${{ secrets.WINDOWS_USER }}@${{ secrets.WINDOWS_HOST }} "powershell -Command `
-          Expand-Archive -Path '$HOME/laravel.zip' -DestinationPath '${{ secrets.REMOTE_PATH }}' -Force"
+      - name: Run Laravel migrations (optional)
+        shell: powershell
+        run: |
+          cd D:\Web1\arul\testing
+          php artisan migrate --force
+
+      - name: Laravel config/cache optimization
+        shell: powershell
+        run: |
+          cd D:\Web1\arul\testing
+          php artisan config:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
