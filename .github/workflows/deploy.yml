@@ -35,6 +35,14 @@ jobs:
           $source = "${{ github.workspace }}"
           $destination = "D:\Web\arul\testing"
           robocopy $source $destination /MIR /XD .git node_modules vendor tests .github /XF .env
+          $code = $LASTEXITCODE
+          if ($code -le 3) {
+            Write-Host "Robocopy completed successfully with exit code $code"
+            exit 0
+          } else {
+            Write-Error "Robocopy failed with exit code $code"
+            exit $code
+          }
 
       - name: Set permissions for Laravel storage and cache folders
         shell: powershell
