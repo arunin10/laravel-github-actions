@@ -51,12 +51,6 @@ jobs:
           icacls "$laravelPath\storage" /grant "IIS_IUSRS:(OI)(CI)F" /T
           icacls "$laravelPath\bootstrap\cache" /grant "IIS_IUSRS:(OI)(CI)F" /T
 
-      - name: Run Laravel migrations (optional)
-        shell: powershell
-        run: |
-          cd D:\Web\arul\testing
-          php artisan migrate --force
-
       - name: Laravel config/cache optimization
         shell: powershell
         run: |
